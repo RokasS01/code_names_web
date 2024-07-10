@@ -135,10 +135,72 @@ main {
     cursor: pointer;
 }
 
-#room button#startGame:hover {
+#room button#startGame:hover, #teamSelection button#startGameButton:hover {
     background-color: #367929;
 }
 
 #room button.kickUser:hover, #room button#leaveRoom:hover {
     background-color: #792929;
+}
+
+/* Styles pour la section de sélection d'équipes */
+#teamSelection {
+    display: none;
+    background-color: #f9f9f9;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 20px;
+}
+
+#teamSelection h3 {
+    margin-bottom: 10px;
+}
+
+#teamSelection table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+#teamSelection table th, #teamSelection table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+}
+
+#teamSelection table th {
+    background-color: #f0f0f0;
+}
+
+#teamSelection ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+#teamSelection button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+#teamSelection button:hover {
+    background-color: #0056b3;
+}
+
+#teamSelection button#startGameButton {
+    margin: 32px auto 0 auto;
+    background-color: #50ca45;
+}
+
+.rejoindreEquipe {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
 }

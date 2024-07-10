@@ -25,7 +25,7 @@
         <div id="room" style="display:none;">
             <h2>Code <span id="roomID"></span></h2>
             <button id="leaveRoom">Quitter le salon</button>
-            <button id="startGame" style="display:none;">Jouer</button>
+            <button id="startGame" style="display:none;">Faire les équipes</button>
             <div class="roomContent">
                 <section>
                     <h3>Utilisateurs :</h3>
@@ -37,6 +37,28 @@
                 </section>
             </div>
         </div>
+
+        <section id="teamSelection" style="display:none;">
+            <h3>Choisissez vos équipes :</h3>
+            <table>
+                <tr>
+                    <th>Équipe Rouge</th>
+                    <th>Joueurs non attribués</th>
+                    <th>Équipe Bleue</th>
+                </tr>
+                <tr>
+                    <td><ul id="redTeam"></ul></td>
+                    <td><ul id="unassignedPlayers"></ul></td>
+                    <td><ul id="blueTeam"></ul></td>
+                </tr>
+            </table>
+            <div class="rejoindreEquipe">
+                <button id="joinRedTeam">Rejoindre l'équipe Rouge</button>
+                <button id="joinBlueTeam">Rejoindre l'équipe Bleue</button>
+            </div>
+            <button id="startGameButton" style="display:none;">Lancer la partie</button>
+        </section>
+
     </main>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -67,6 +89,23 @@
         document.getElementById('leaveRoom').addEventListener('click', () => {
             socket.emit('leaveRoom', { code: currentRoom });
             document.getElementById('room').style.display = 'none';
+            document.getElementById('teamSelection').style.display = 'none';
+        });
+
+        document.getElementById('startGame').addEventListener('click', () => {
+            document.getElementById('teamSelection').style.display = 'block';
+        });
+
+        document.getElementById('joinRedTeam').addEventListener('click', () => {
+            socket.emit('joinTeam', { code: currentRoom, team: 'red' });
+        });
+
+        document.getElementById('joinBlueTeam').addEventListener('click', () => {
+            socket.emit('joinTeam', { code: currentRoom, team: 'blue' });
+        });
+
+        document.getElementById('startGameButton').addEventListener('click', () => {
+            socket.emit('startGame', { code: currentRoom });
         });
 
         socket.on('roomCreated', (data) => {
@@ -93,6 +132,10 @@
 
         socket.on('historyUpdate', (history) => {
             updateHistory(history);
+        });
+
+        socket.on('updateTeams', (teams) => {
+            updateTeams(teams);
         });
 
         socket.on('error', (message) => {
@@ -137,6 +180,40 @@
                 li.innerText = event;
                 historyList.appendChild(li);
             });
+        }
+
+        function updateTeams(teams) {
+            const redTeamList = document.getElementById('redTeam');
+            const blueTeamList = document.getElementById('blueTeam');
+            const unassignedPlayersList = document.getElementById('unassignedPlayers');
+
+            redTeamList.innerHTML = '';
+            blueTeamList.innerHTML = '';
+            unassignedPlayersList.innerHTML = '';
+
+            teams.red.forEach(user => {
+                const li = document.createElement('li');
+                li.innerText = user.username;
+                redTeamList.appendChild(li);
+            });
+
+            teams.blue.forEach(user => {
+                const li = document.createElement('li');
+                li.innerText = user.username;
+                blueTeamList.appendChild(li);
+            });
+
+            teams.unassigned.forEach(user => {
+                const li = document.createElement('li');
+                li.innerText = user.username;
+                unassignedPlayersList.appendChild(li);
+            });
+
+            if (isHost && teams.unassigned.length === 0) {
+                document.getElementById('startGameButton').style.display = 'block';
+            } else {
+                document.getElementById('startGameButton').style.display = 'none';
+            }
         }
     </script>
 </body>

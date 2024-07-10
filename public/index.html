@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jeu en ligne</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Code Names</h1>
+    </header>
+
+    <main>
+        <div class="container">
+            <input type="text" id="username" placeholder="Entrez votre pseudo">
+            <button id="createRoom">Créer un salon</button>
+        </div>
+
+        <div class="container">
+            <input type="text" id="roomCode" placeholder="Entrez le code du salon">
+            <button id="joinRoom">Rejoindre un salon</button>
+        </div>
+
+        <div id="room" style="display:none;">
+            <h2>Code <span id="roomID"></span></h2>
+            <button id="leaveRoom">Quitter le salon</button>
+            <button id="startGame" style="display:none;">Jouer</button>
+            <div class="roomContent">
+                <section>
+                    <h3>Utilisateurs :</h3>
+                    <ul id="userList"></ul>
+                </section>
+                <section>
+                    <h3>Historique :</h3>
+                    <ul id="history"></ul>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let currentRoom = null;
+        let isHost = false;
+
+        document.getElementById('createRoom').addEventListener('click', () => {
+            const username = document.getElementById('username').value;
+            if (username) {
+                socket.emit('createRoom', { username });
+            } else {
+                alert('Veuillez entrer un pseudo.');
+            }
+        });
+
+        document.getElementById('joinRoom').addEventListener('click', () => {
+            const code = document.getElementById('roomCode').value;
+            const username = document.getElementById('username').value;
+            if (username && code) {
+                socket.emit('joinRoom', { code, username });
+            } else {
+                alert('Veuillez entrer un pseudo et un code de salon.');
+            }
+        });
+
+        document.getElementById('leaveRoom').addEventListener('click', () => {
+            socket.emit('leaveRoom', { code: currentRoom });
+            document.getElementById('room').style.display = 'none';
+        });
+
+        socket.on('roomCreated', (data) => {
+            currentRoom = data.code;
+            isHost = true;
+            document.getElementById('room').style.display = 'block';
+            document.getElementById('roomID').innerText = data.code;
+            document.getElementById('startGame').style.display = 'block';
+            updateUserList(data.users);
+        });
+
+        socket.on('roomJoined', (data) => {
+            currentRoom = data.code;
+            isHost = false;
+            document.getElementById('room').style.display = 'block';
+            document.getElementById('roomID').innerText = data.code;
+            document.getElementById('startGame').style.display = 'none';
+            updateUserList(data.users);
+        });
+
+        socket.on('userList', (users) => {
+            updateUserList(users);
+        });
+
+        socket.on('historyUpdate', (history) => {
+            updateHistory(history);
+        });
+
+        socket.on('error', (message) => {
+            alert(message);
+        });
+
+        socket.on('kicked', () => {
+            document.getElementById('room').style.display = 'none';
+            alert('Vous avez été viré du salon.');
+        });
+
+        socket.on('roomClosed', () => {
+            document.getElementById('room').style.display = 'none';
+            alert('Le salon a été fermé par l\'hôte.');
+        });
+
+        function updateUserList(users) {
+            const userList = document.getElementById('userList');
+            userList.innerHTML = '';
+            users.forEach(user => {
+                const li = document.createElement('li');
+                li.innerText = user.username + (user.isHost ? ' (HOST)' : '');
+                if (isHost && !user.isHost) {
+                    li.innerHTML += ' <button class="kickUser" data-id="' + user.id + '">Virer</button>';
+                }
+                userList.appendChild(li);
+            });
+
+            document.querySelectorAll('.kickUser').forEach(button => {
+                button.addEventListener('click', () => {
+                    const userId = button.getAttribute('data-id');
+                    socket.emit('kickUser', { code: currentRoom, userId });
+                });
+            });
+        }
+
+        function updateHistory(history) {
+            const historyList = document.getElementById('history');
+            historyList.innerHTML = '';
+            history.forEach(event => {
+                const li = document.createElement('li');
+                li.innerText = event;
+                historyList.appendChild(li);
+            });
+        }
+    </script>
+</body>
+</html>
